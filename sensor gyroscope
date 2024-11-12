@@ -1,0 +1,43 @@
+double kP = 0.1, kI = 0.0, kD = 0.0;
+double integral = 0, previousError = 0;
+
+double error = -gyro.getRate();
+integral += error * deltaTime; // accumulate error over time
+double derivative = (error - previousError) / deltaTime;
+
+double correction = kP * error + kI * integral + kD * derivative;
+
+drive.tankDrive(0.5 + correction, 0.5 - correction);
+previousError = error;
+
+double heading;
+
+Spark left1 = new Spark(0);
+Spark left2 = new Spark(1);
+
+Spark right1 = new Spark(2);
+Spark right2 = new Spark(3);
+
+MotorControllerGroup leftMotors = new MotorControllerGroup(left1, left2);
+MotorControllerGroup rightMotors = new MotorControllerGroup(right1, right2);
+
+DifferentialDrive drive = new DifferentialDrive(leftMotors, rightMotors);
+
+@Override
+public void robotInit() {
+    rightMotors.setInverted(true);
+}
+
+@Override
+public void autonomousInit() {
+    // Set setpoint to current heading at start of auto
+    heading = gyro.getAngle();
+}
+
+@Override
+public void autonomousPeriodic() {
+    double error = heading - gyro.getAngle();
+
+    // Drives forward continuously at half speed, using the gyro to stabilize the heading
+    drive.tankDrive(.5 + kP * error, .5 - kP * error);
+}
